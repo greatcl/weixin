@@ -8,16 +8,22 @@ class message extends spController
 		parent::__construct();
 	}
 
+    /**
+     * 微信消息交互入口
+     * 微信服务器所有的消息及事件推送的URL
+     */
     public function entry(){
-        // 第一次验证微信接口配置信息时使用，验证后注释掉
- 		$this -> valid();
-
-
+        // 验证微信接口配置信息
+        if(isset($_GET['echostr']) && isset($_GET['nonce']) && isset($_GET['timestamp']) && isset($_GET['signature'])){
+            $this -> valid();
+        }
+        // 响应消息及事件推送
+        $this->responseMsg();
     }
 
     private function responseMsg() {
         //获取post数据
-        $postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
+        $postStr = $GLOBALS['HTTP_RAW_POST_DATA'];
 
         //解析数据
         if (!empty($postStr)) {
@@ -41,9 +47,6 @@ class message extends spController
                 default :
                     break;
             }
-        } else {
-            echo "nothing";
-            exit ;
         }
     }
 
@@ -51,13 +54,13 @@ class message extends spController
      * 获取回复的文本消息
      */
     private function getResponseText($contentStr) {
-        $resultStr = "<xml>
-					<ToUserName><![CDATA[" . $this -> fromUserName . "]]></ToUserName>
-					<FromUserName><![CDATA[" . $this -> toUserName . "]]></FromUserName>
-					<CreateTime>" . time() . "</CreateTime>
+        $resultStr = '<xml>
+					<ToUserName><![CDATA[' . $this -> fromUserName . ']]></ToUserName>
+					<FromUserName><![CDATA[' . $this -> toUserName . ']]></FromUserName>
+					<CreateTime>' . time() . '</CreateTime>
 					<MsgType><![CDATA[text]]></MsgType>
-					<Content><![CDATA[$contentStr]]></Content>
-					</xml>";
+					<Content><![CDATA[' . $contentStr . ']]></Content>
+					</xml>';
         return $resultStr;
     }
 
@@ -66,10 +69,10 @@ class message extends spController
      * @todo 未完善
      */
     private function getResponseNews($newsList) {
-        $newsTpl = "<xml>
-					<ToUserName><![CDATA[" . $this -> fromUserName . "]]></ToUserName>
-					<FromUserName><![CDATA[" . $this -> toUserName . "]]></FromUserName>
-					<CreateTime>" . time() . "</CreateTime>
+        $newsTpl = '<xml>
+					<ToUserName><![CDATA[' . $this -> fromUserName . ']]></ToUserName>
+					<FromUserName><![CDATA[' . $this -> toUserName . ']]></FromUserName>
+					<CreateTime>' . time() . '</CreateTime>
 					<MsgType><![CDATA[news]]></MsgType>
 					<ArticleCount>1</ArticleCount>
 					<Articles>
@@ -80,7 +83,7 @@ class message extends spController
 					<Url><![CDATA[%s]]></Url>
 					</item>
 					</Articles>
-					</xml>";
+					</xml>';
         $resultNews = sprintf($newsTpl, $fromUsername, $toUsername, $time);
         return $resultNews;
     }
@@ -90,60 +93,50 @@ class message extends spController
      */
     private function handleText($keyword) {
         if (!empty($keyword)) {
-            $msgType = "text";
-            $contentStr = "你发送的内容为：" . $keyword;
+            $contentStr = "你发送的内容为：$keyword";
         } else {
-            $msgType = "text";
-            $contentStr = "不要输入空消息哦～";
+            $contentStr = '不要输入空消息哦～';
         }
-        // echo $this -> getResponseText($contentStr);
+        echo $this -> getResponseText($contentStr);
     }
 
     /**
      * 处理接收到的事件推送
      */
     private function handleEvent($msgEvent, $eventKey) {
-        switch ($msgEvent) {
-            case "subscribe" :
-                $msgType = "text";
-                $url = OAUTH_URL;
-                $contentStr = "欢迎使用畅言门户家长助手微信平台，请绑定账号来使用更多功能<a href='$url'>绑定账号</a>";
+        switch ($msgEvent) { // 判断事件类型
+            case 'subscribe' : // 用户关注订阅事件
+                $url = 'www.baidu.com';
+                $contentStr = "欢迎使用微信平台，请<a href='$url'>点此</a>进入官网";
                 echo $this -> getResponseText($contentStr);
+
                 // 插入一条订阅者信息
                 $this -> createSubscriber(APPID, $this -> fromUserName);
                 break;
-            case "CLICK" :
+            case 'CLICK' : // 点击菜单事件
                 switch ($eventKey) {
-                    case "usage" :
-                        $contentStr = "您可以在您的个人学习门户个人中心中绑定孩子账号，在“更多”中将微信账号绑定我的门户账号，在成绩单中可以点击查询您的孩子题库成绩、作业成绩以及作业任务。";
-                        echo $this -> getResponseText($contentStr);
-                        break;
-                    case "aboutus":
-                        $contentStr = "关于我们：我是家长助手";
-                        echo $this -> getResponseText($contentStr);
-                        break;
-                    case "feedback":
-                        $contentStr = "请直接回复要反馈的内容，我们会尽快进行处理答复。";
+                    case 'help' :
+                        $contentStr = '';
                         echo $this -> getResponseText($contentStr);
                         break;
                     default :
-                        $contentStr = "你点击的菜单未定义";
+                        $contentStr = '你点击的菜单未定义';
                         echo $this -> getResponseText($contentStr);
                         break;
                 }
                 break;
-            case "VIEW" :
-                $msgType = "text";
+            case 'VIEW' :
+                $msgType = 'text';
                 $contentStr = $eventKey;
                 break;
-            case "LOCATION" :
+            case 'LOCATION' :
                 break;
-            case "unsubscribe" :
+            case 'unsubscribe' : // 取消订阅
                 $this->deleteSubscriber(APPID, $this->fromUserName);
                 break;
             default :
-                $msgType = "text";
-                $contentStr = "OTHERS";
+                $msgType = 'text';
+                $contentStr = 'OTHERS';
                 break;
         }
     }
@@ -155,7 +148,7 @@ class message extends spController
      *
      */
     private function createSubscriber($appId, $openId) {
-        spClass('lib_parent_center') -> createSubscriber($appId, $openId);
+        spClass('lib_user') -> createSubscriber($appId, $openId);
     }
 
     /**
@@ -165,18 +158,17 @@ class message extends spController
      *
      */
     private function deleteSubscriber($appId, $openId){
-        spClass('lib_parent_center')->deleteSubscriber($appId, $openId);
+        spClass('lib_user')->deleteSubscriber($appId, $openId);
     }
 
     /**
      * 验证微信配置URL的正确性
      */
     private function valid() {
-        $echoStr = $_GET["echostr"];
+        $echoStr = $_GET['echostr'];
 
         if ($this -> checkSignature()) {
-            echo $echoStr;
-            exit ;
+            die($echoStr);
         }
     }
 
@@ -184,9 +176,9 @@ class message extends spController
      * 检验签名
      */
     private function checkSignature() {
-        $signature = $_GET["signature"];
-        $timestamp = $_GET["timestamp"];
-        $nonce = $_GET["nonce"];
+        $signature = $_GET['signature'];
+        $timestamp = $_GET['timestamp'];
+        $nonce = $_GET['nonce'];
 
         $token = TOKEN;
         $tmpArr = array($token, $timestamp, $nonce);

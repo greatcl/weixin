@@ -1,0 +1,28 @@
+<?php /* Smarty version Smarty-3.0.8, created on 2014-07-10 05:55:47
+         compiled from "F:\MyProject\weixin-php/template\admin/login.html" */ ?>
+<?php /*%%SmartyHeaderCode:1348053be2ae3eba809-78578900%%*/if(!defined('SMARTY_DIR')) exit('no direct access allowed');
+$_smarty_tpl->decodeProperties(array (
+  'file_dependency' => 
+  array (
+    '2bcdec9708382c4f195f8317662d6226df951cef' => 
+    array (
+      0 => 'F:\\MyProject\\weixin-php/template\\admin/login.html',
+      1 => 1404964455,
+      2 => 'file',
+    ),
+  ),
+  'nocache_hash' => '1348053be2ae3eba809-78578900',
+  'function' => 
+  array (
+  ),
+  'has_nocache_code' => false,
+)); /*/%%SmartyHeaderCode%%*/?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+
+</body>
+</html>
